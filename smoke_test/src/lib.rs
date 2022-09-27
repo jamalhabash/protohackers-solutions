@@ -25,17 +25,14 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], config.port))).unwrap(); //fix this
+    let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], config.port)))?;
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                //handle_connection(stream);
                 thread::spawn(move || handle_connection(stream));
             }
-            Err(e) => {
-                eprintln!("{}", e) //fix this, should pass up //if this happens, it means the connection failed, so you shouldn't pass up you can keep the program running gracefully
-            }
+            Err(e) => eprintln!("{}", e),
         }
     }
     Ok(())

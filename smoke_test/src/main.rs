@@ -13,7 +13,6 @@ fn main() {
 
     if let Err(e) = smoke_test::run(config) {
         eprintln!("Application error: {e}");
-
         process::exit(1);
     }
 }
