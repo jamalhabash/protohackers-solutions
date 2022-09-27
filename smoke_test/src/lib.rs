@@ -26,7 +26,7 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], config.port)))?;
-
+    //should I also add a timeout for the read?
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -53,6 +53,7 @@ fn handle_connection(stream: TcpStream) {
                     .get_ref()
                     .shutdown(Shutdown::Both)
                     .expect("shutdown call failed"); //do I need to do something other than except here, will this shutdown the entire program? this should be a recoverable error
+                                                     //I think except is ok here, the thread will panic and shutdown.
                 break;
             }
             Err(e) => {
