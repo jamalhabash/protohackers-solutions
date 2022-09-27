@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::net::SocketAddr;
 use std::net::{Shutdown, TcpListener, TcpStream};
 
@@ -15,7 +15,10 @@ impl Config {
             return Err("not enough arguments");
         }
 
-        let port: u16 = args[1].clone().parse().unwrap(); //get rid of this unwrap...question mark syntax?, match statement?
+        let port: u16 = match args[1].clone().parse() {
+            Ok(number) => number,
+            Err(_) => Err("port must be a value between 0-65535")?,
+        };
 
         Ok(Config { port })
     }
@@ -31,7 +34,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 thread::spawn(move || handle_connection(stream));
             }
             Err(e) => {
-                eprintln!("{}", e) //fix this, should pass up
+                eprintln!("{}", e) //fix this, should pass up //if this happens, it means the connection failed, so you shouldn't pass up you can keep the program running gracefully
             }
         }
     }
@@ -44,10 +47,8 @@ fn handle_connection(stream: TcpStream) {
     println!("We have a new connection!");
 
     loop {
-        let mut buf = String::new();
-        let mut buf = Vec::new();
-        //read line will return ok(0) if it is end of file so use a match statement and end.break
-        //stream.get_ref().shutdown(how) probably use this to close the connection on EOF
+        let mut buf: Vec<u8> = Vec::new();
+
         match stream.read_until(0xA, &mut buf) {
             Ok(0) => {
                 println!("EOL reached");
@@ -59,15 +60,12 @@ fn handle_connection(stream: TcpStream) {
                 break;
             }
             Err(e) => {
-                println!("There was an error {}", e);
+                eprintln!("An error occured while reading bytes: {}", e);
                 break;
             }
             _ => (),
         }
-        // if stream.read_line(&mut buf).is_err() {
-        //     break; //check to see if connection is every terminated
-        // }
-        println!("{:?}", buf);
+
         stream.get_ref().write(&buf).unwrap(); //TODO
     }
 
