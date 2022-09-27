@@ -30,9 +30,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                println!("We have a new connection!");
                 thread::spawn(move || handle_connection(stream));
             }
-            Err(e) => eprintln!("{}", e),
+            Err(e) => eprintln!("{e}"),
         }
     }
     Ok(())
@@ -41,32 +42,30 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 fn handle_connection(stream: TcpStream) {
     let mut stream = BufReader::new(stream);
     //maybe you can use a while let here instead of a loop
-    println!("We have a new connection!");
 
     loop {
         let mut buf: Vec<u8> = Vec::new();
 
         match stream.read_until(0xA, &mut buf) {
             Ok(0) => {
-                println!("EOL reached");
-
+                println!("EOL reached, shutting down connection.");
                 stream
                     .get_ref()
                     .shutdown(Shutdown::Both)
-                    .expect("shutdown call failed");
+                    .expect("shutdown call failed"); //do I need to do something other than except here, will this shutdown the entire program? this should be a recoverable error
                 break;
             }
             Err(e) => {
-                eprintln!("An error occured while reading bytes: {}", e);
+                eprintln!("An error occured while reading bytes: {e}");
                 break;
             }
-            _ => (),
+            _ => {
+                //this is ok(number of bytes read, so say how many are read)
+                stream.get_ref().write(&buf).unwrap();
+                //then say how many bytes are written here.
+            }
         }
-
-        stream.get_ref().write(&buf).unwrap(); //TODO
     }
-
-    println!("We are out of loop!")
 }
 
 // #[cfg(test)]
