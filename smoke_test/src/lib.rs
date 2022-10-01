@@ -45,15 +45,16 @@ fn handle_connection(stream: TcpStream) {
     loop {
         let mut buf: Vec<u8> = Vec::new();
 
-        //read
+        // Read bytes from stream and store in buf
         match stream.read_until(0xA, &mut buf) {
             Ok(number_bytes_read) => {
-                if number_bytes_read > 0 {
-                    println!("{} number of bytes read.", number_bytes_read);
-                } else {
-                    //stream shutdown when value is dropped
+                if number_bytes_read == 0 {
+                    // When number_bytes_read is equal to 0, the end-of-file (EOF) has been reached.
+                    // We break the loop, allowing the stream value to be dropped which will close the connection.
                     println!("EOL reached, shutting down connection.");
                     break;
+                } else {
+                    println!("{} number of bytes read.", number_bytes_read);
                 }
             }
             Err(e) => {
@@ -62,7 +63,7 @@ fn handle_connection(stream: TcpStream) {
             }
         }
 
-        //write
+        // Write buf to the stream
         match stream.get_ref().write(&buf) {
             Ok(number_bytes_written) => {
                 println!("{} number of bytes written.", number_bytes_written)
@@ -74,13 +75,3 @@ fn handle_connection(stream: TcpStream) {
         }
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn pass() {
-//         assert!(true);
-//     }
-// }
