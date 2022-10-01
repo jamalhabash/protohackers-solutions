@@ -26,7 +26,7 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], config.port)))?;
-    //should I also add a timeout for the read?
+
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -36,6 +36,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             Err(e) => eprintln!("{e}"),
         }
     }
+
     Ok(())
 }
 
