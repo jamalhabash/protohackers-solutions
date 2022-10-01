@@ -1,7 +1,7 @@
 use std::error::Error;
-use std::io::{BufRead, BufReader, ErrorKind, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::net::SocketAddr;
-use std::net::{Shutdown, TcpListener, TcpStream};
+use std::net::{TcpListener, TcpStream};
 
 use std::thread;
 
@@ -44,87 +44,35 @@ fn handle_connection(stream: TcpStream) {
 
     loop {
         let mut buf: Vec<u8> = Vec::new();
-        if let Ok(num_bytes_read) = stream.read_until(0xA, &mut buf) {
-            if num_bytes_read > 0 {
-                println!("{} number of bytes read", num_bytes_read);
-                match stream.get_ref().write(&buf) {
-                    Ok(num_bytes_written) => {
-                        println!("{} number of bytes written", num_bytes_written)
-                    }
-                    Err(error) => eprintln!("An error occured while writing bytes: {error}"),
+
+        //read
+        match stream.read_until(0xA, &mut buf) {
+            Ok(number_bytes_read) => {
+                if number_bytes_read > 0 {
+                    println!("{} number of bytes read.", number_bytes_read);
+                } else {
+                    //stream shutdown when value is dropped
+                    println!("EOL reached, shutting down connection.");
+                    break;
                 }
-            } else {
-                println!("EOL reached, shutting down connection.");
+            }
+            Err(e) => {
+                eprintln!("An error occured while reading bytes: {e}");
                 break;
             }
-        } else {
-            eprintln!("An error occured while reading bytes from stream, shutting down.");
-            break;
+        }
+
+        //write
+        match stream.get_ref().write(&buf) {
+            Ok(number_bytes_written) => {
+                println!("{} number of bytes written.", number_bytes_written)
+            }
+            Err(e) => {
+                eprintln!("An error occured while writing bytes: {e}");
+                break;
+            }
         }
     }
-    // loop {
-    //     let mut buf: Vec<u8> = Vec::new();
-
-    // match stream.read_until(0xA, &mut buf) {
-    //     Ok(0) => {
-    //         println!("EOL reached, shutting down connection.");
-    //         stream
-    //             .get_ref()
-    //             .shutdown(Shutdown::Both)
-    //             .expect("shutdown call failed");
-    //         break;
-    //     }
-    //     Err(e) => {
-    //         eprintln!("An error occured while reading bytes: {e}");
-    //         break;
-    //     }
-    //     _ => {
-    //         //this is ok(number of bytes read, so say how many are read)
-    //         stream.get_ref().write(&buf).unwrap();
-    //         //then say how many bytes are written here.
-    //     }
-    // }
-
-    // if let Ok(num_bytes_read) = stream.read_until(0xA, &mut buf) {
-    //     if num_bytes_read > 0 {
-    //         println!("{} number of bytes read", num_bytes_read);
-    //         match stream.get_ref().write(&buf) {
-    //             Ok(num_bytes_written) => {
-    //                 println!("{} number of bytes written", num_bytes_written)
-    //             }
-    //             Err(error) => match error.kind() {
-    //                 ErrorKind::Interrupted => stream.get_ref().write(&buf).expect("An error occured while writing bytes"),
-    //                 fatal_error => eprintln!("An error occured while writing bytes: {fatal_error}"),
-    //         }
-    //     } else {
-    //         println!("EOL reached, shutting down connection.");
-    //         break;
-    //     }
-    // } else {
-    //     eprintln!("An error occured while reading bytes from stream.");
-    //     break;
-    // }
-
-    // match stream.read_until(0xA, &mut buf) {
-    //     Ok(number_bytes_read) => {
-    //         println!("{} number of bytes read", number_bytes_read);
-    //         stream.get_ref().write(&buf).unwrap();
-    //     }
-    //     Ok(0) => {
-    //         println!("EOL reached, shutting down connection.");
-    //         break;
-    //     }
-    //     Err(e) => {
-    //         eprintln!("An error occured while reading bytes: {e}");
-    //         break;
-    //     }
-    //     _ => {
-    //         //this is ok(number of bytes read, so say how many are read)
-
-    //         //then say how many bytes are written here.
-    //     }
-    // }
-    //}
 }
 
 // #[cfg(test)]
