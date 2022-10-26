@@ -47,7 +47,7 @@ fn handle_connection(stream: impl Read + Write) {
         let mut buf: Vec<u8> = Vec::new();
 
         // Read bytes from 'stream' and store in 'buf'
-        match stream.read_until(0xA /* 0xA is /n character */, &mut buf) {
+        match stream.read_until(0xA /* 0xA is \n character */, &mut buf) {
             Ok(number_bytes_read) => {
                 if number_bytes_read == 0 {
                     // End-of-file (EOF) has been reached.
