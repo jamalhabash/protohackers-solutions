@@ -1,7 +1,7 @@
 use std::error::Error;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::SocketAddr;
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpListener;
 
 use std::thread;
 
@@ -40,14 +40,14 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn handle_connection(stream: TcpStream) {
+fn handle_connection(stream: impl Read + Write) {
     let mut stream = BufReader::new(stream);
 
     loop {
         let mut buf: Vec<u8> = Vec::new();
 
         // Read bytes from 'stream' and store in 'buf'
-        match stream.read_until(0xA, &mut buf) {
+        match stream.read_until(0xA /* 0xA is /n character */, &mut buf) {
             Ok(number_bytes_read) => {
                 if number_bytes_read == 0 {
                     // End-of-file (EOF) has been reached.
@@ -65,7 +65,7 @@ fn handle_connection(stream: TcpStream) {
         }
 
         // Write contents of 'buf' to 'stream'
-        match stream.get_ref().write(&buf) {
+        match stream.get_mut().write(&buf) {
             Ok(number_bytes_written) => {
                 println!("{} number of bytes written.", number_bytes_written)
             }
